@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Result: {{ exam.title }} - CloudExam{% endblock %}
+{% block page_title %}Examination Assessment Result{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-12 col-lg-9">
+        <div class="card-cloud shadow-sm mb-4">
+            <div class="card-cloud-header">
+                <div>
+                    <h5 class="fw-bold text-dark mb-0">{{ exam.title }}</h5>
+                    <span class="badge bg-light text-secondary border mt-1">{{ exam.subject }}</span>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('results.history') }}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-clock-history me-1"></i> Exam History
+                    </a>
+                    <a href="{{ url_for('results.download_pdf', result_id=result.id) }}" class="btn btn-sm btn-danger">
+                        <i class="bi bi-file-earmark-pdf me-1"></i> Download PDF
+                    </a>
+                </div>
+            </div>
+
+            <div class="card-cloud-body p-4 p-md-5">
+                <!-- Result Outcome Badge & Circular Metric -->
+                <div class="text-center mb-4">
+                    <div class="result-score-circle {{ 'result-pass' if result.result_status == 'PASS' else 'result-fail' }}">
+                        <span class="display-5 fw-bold mb-0">{{ result.percentage }}%</span>
+                        <span class="badge {{ 'bg-success' if result.result_status == 'PASS' else 'bg-danger' }} text-white text-uppercase mt-1 px-3 py-1">
+                            {{ result.result_status }}
+                        </span>
+                    </div>
+
+                    <h4 class="fw-bold text-dark">
+                        {% if result.result_status == 'PASS' %}
+                            Congratulations, {{ student.name }}! You Passed.
+                        {% else %}
+                            Assessment Completed. Did not meet passing threshold.
+                        {% endif %}
+                    </h4>
+                    <p class="text-muted small">Passing requirement: {{ exam.passing_percentage }}%</p>
+                </div>
+
+                <!-- Score Metrics Breakdown Grid -->
+                <div class="row g-3 mb-4">
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 bg-light rounded text-center border">
+                            <span class="text-muted small d-block">Total Questions</span>
+                            <span class="fs-5 fw-bold text-dark">{{ total_questions }}</span>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 bg-success bg-opacity-10 rounded text-center border border-success">
+                            <span class="text-success small d-block fw-semibold">Correct Answers</span>
+                            <span class="fs-5 fw-bold text-success">{{ correct_count }}</span>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 bg-danger bg-opacity-10 rounded text-center border border-danger">
+                            <span class="text-danger small d-block fw-semibold">Incorrect Answers</span>
+                            <span class="fs-5 fw-bold text-danger">{{ incorrect_count }}</span>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 bg-secondary bg-opacity-10 rounded text-center border border-secondary">
+                            <span class="text-secondary small d-block fw-semibold">Unanswered</span>
+                            <span class="fs-5 fw-bold text-secondary">{{ unanswered_count }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Session Metadata Table -->
+                <div class="card border mb-4">
+                    <div class="card-header bg-light py-2 px-3 fw-semibold text-secondary small text-uppercase">
+                        Candidate & Attempt Audit Log
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-bordered mb-0 small">
+                                <tbody>
+                                    <tr>
+                                        <th class="bg-light w-25 text-secondary">Student Name</th>
+                                        <td>{{ student.name }}</td>
+                                        <th class="bg-light w-25 text-secondary">Student Email</th>
+                                        <td>{{ student.email }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th class="bg-light text-secondary">Marks Obtained</th>
+                                        <td><strong class="text-primary fs-6">{{ result.obtained_marks }}</strong> / {{ result.total_marks }}</td>
+                                        <th class="bg-light text-secondary">Duration Taken</th>
+                                        <td>{{ duration_minutes }} minutes</td>
+                                    </tr>
+                                    <tr>
+                                        <th class="bg-light text-secondary">Started At</th>
+                                        <td>{{ attempt.start_time.strftime('%Y-%m-%d %H:%M:%S UTC') if attempt else 'N/A' }}</td>
+                                        <th class="bg-light text-secondary">Submitted At</th>
+                                        <td>{{ attempt.submission_time.strftime('%Y-%m-%d %H:%M:%S UTC') if attempt and attempt.submission_time else result.created_at.strftime('%Y-%m-%d %H:%M:%S UTC') }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center">
+                    <a href="{{ url_for('student.dashboard') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-house me-1"></i> Return to Dashboard
+                    </a>
+                    <a href="{{ url_for('results.download_pdf', result_id=result.id) }}" class="btn btn-primary-cloud">
+                        <i class="bi bi-download me-1"></i> Download Official PDF Report
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

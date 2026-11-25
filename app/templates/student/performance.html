@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}My Performance Analytics - CloudExam{% endblock %}
+{% block page_title %}My Performance Analytics{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-label">Average Score</div>
+            <div class="stat-val text-primary">{{ avg_marks }}%</div>
+            <div class="small text-muted mt-1">Overall mean performance</div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-label">Personal Best</div>
+            <div class="stat-val text-success">{{ highest_marks }}%</div>
+            <div class="small text-muted mt-1">Highest exam percentage</div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-label">Lowest Score</div>
+            <div class="stat-val text-warning">{{ lowest_marks }}%</div>
+            <div class="small text-muted mt-1">Minimum exam score</div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-label">Pass vs Fail</div>
+            <div class="stat-val text-info">{{ pass_count }} / {{ results|length }}</div>
+            <div class="small text-muted mt-1">{{ fail_count }} exams failed</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Progress Across Examinations Line/Bar Chart -->
+    <div class="col-12 col-lg-8">
+        <div class="card-cloud h-100">
+            <div class="card-cloud-header">
+                <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-graph-up me-2 text-primary"></i>Score Progress Across Examinations</h6>
+            </div>
+            <div class="card-cloud-body" style="min-height: 280px;">
+                <canvas id="studentTimelineChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Subject-Wise Mastery Chart -->
+    <div class="col-12 col-lg-4">
+        <div class="card-cloud h-100">
+            <div class="card-cloud-header">
+                <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-mortarboard-fill me-2 text-primary"></i>Subject Mastery</h6>
+            </div>
+            <div class="card-cloud-body" style="min-height: 280px;">
+                <canvas id="studentSubjectChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- History Listing -->
+<div class="card-cloud">
+    <div class="card-cloud-header">
+        <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-journal-check me-2 text-primary"></i>Exam Performance History</h6>
+    </div>
+    <div class="card-cloud-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light small text-uppercase text-secondary">
+                    <tr>
+                        <th class="ps-4">Examination</th>
+                        <th>Subject</th>
+                        <th>Marks Obtained</th>
+                        <th>Score (%)</th>
+                        <th>Status</th>
+                        <th>Attempt Date</th>
+                        <th class="pe-4 text-end">Official PDF</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if results %}
+                        {% for r in results %}
+                        <tr>
+                            <td class="ps-4 fw-semibold text-dark">{{ r.exam.title }}</td>
+                            <td><span class="badge bg-light text-secondary border">{{ r.exam.subject }}</span></td>
+                            <td><strong>{{ r.obtained_marks }}</strong> / {{ r.total_marks }}</td>
+                            <td><span class="fw-bold">{{ r.percentage }}%</span></td>
+                            <td>
+                                <span class="badge {{ 'badge-pass' if r.result_status == 'PASS' else 'badge-fail' }}">
+                                    {{ r.result_status }}
+                                </span>
+                            </td>
+                            <td class="small text-muted">{{ r.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td class="pe-4 text-end">
+                                <a href="{{ url_for('results.download_pdf', result_id=r.id) }}" class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-file-earmark-pdf me-1"></i> Download PDF
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-muted">No examination data available yet.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    fetch("{{ url_for('student.performance_data') }}")
+        .then(res => res.json())
+        .then(data => {
+            // Timeline progress chart
+            new Chart(document.getElementById('studentTimelineChart'), {
+                type: 'line',
+                data: {
+                    labels: data.timeline.labels,
+                    datasets: [{
+                        label: 'Your Percentage Score (%)',
+                        data: data.timeline.data,
+                        borderColor: '#2563eb',
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 6,
+                        pointBackgroundColor: '#1d4ed8'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, max: 100 }
+                    }
+                }
+            });
+
+            // Subject mastery bar chart
+            new Chart(document.getElementById('studentSubjectChart'), {
+                type: 'bar',
+                data: {
+                    labels: data.subject_performance.labels,
+                    datasets: [{
+                        label: 'Average Score (%)',
+                        data: data.subject_performance.data,
+                        backgroundColor: '#0ea5e9',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, max: 100 }
+                    }
+                }
+            });
+        })
+        .catch(err => console.error('Error fetching student performance:', err));
+});
+</script>
+{% endblock %}

@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}Examination Results Registry - CloudExam{% endblock %}
+{% block page_title %}Results Registry{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <p class="text-muted small mb-0">Browse and export all student examination scores and outcome assessments.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('admin.export_csv') }}" class="btn btn-outline-success">
+            <i class="bi bi-file-earmark-spreadsheet me-1"></i> Export to CSV
+        </a>
+    </div>
+</div>
+
+<div class="card-cloud mb-4">
+    <div class="card-cloud-body">
+        <form method="GET" action="{{ url_for('admin.results') }}" class="row g-2 align-items-center">
+            <div class="col-12 col-md-3">
+                <input type="text" name="student" class="form-control" placeholder="Search student name/email..." value="{{ student_query }}">
+            </div>
+            <div class="col-12 col-md-3">
+                <input type="text" name="exam" class="form-control" placeholder="Search exam title..." value="{{ exam_query }}">
+            </div>
+            <div class="col-6 col-md-2">
+                <select name="subject" class="form-select">
+                    <option value="all">All Subjects</option>
+                    {% for subj in subjects %}
+                    <option value="{{ subj }}" {% if subject_filter == subj %}selected{% endif %}>{{ subj }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-6 col-md-2">
+                <select name="status" class="form-select">
+                    <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Outcomes</option>
+                    <option value="PASS" {% if status_filter == 'PASS' %}selected{% endif %}>Pass Only</option>
+                    <option value="FAIL" {% if status_filter == 'FAIL' %}selected{% endif %}>Fail Only</option>
+                </select>
+            </div>
+            <div class="col-12 col-md-2 d-flex gap-1">
+                <button type="submit" class="btn btn-primary-cloud flex-grow-1">Filter</button>
+                {% if student_query or exam_query or subject_filter != 'all' or status_filter != 'all' %}
+                <a href="{{ url_for('admin.results') }}" class="btn btn-outline-secondary" title="Reset Filters"><i class="bi bi-x-lg"></i></a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card-cloud">
+    <div class="card-cloud-header">
+        <h6 class="mb-0 fw-bold text-dark">Results Records ({{ results|length }})</h6>
+    </div>
+    <div class="card-cloud-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light small text-uppercase text-secondary">
+                    <tr>
+                        <th class="ps-4">Student</th>
+                        <th>Exam</th>
+                        <th>Subject</th>
+                        <th>Marks</th>
+                        <th>Percentage</th>
+                        <th>Status</th>
+                        <th>Submitted At</th>
+                        <th class="pe-4 text-end">Reports & Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if results %}
+                        {% for r in results %}
+                        <tr>
+                            <td class="ps-4">
+                                <div class="fw-semibold text-dark">{{ r.student.name }}</div>
+                                <div class="small text-muted">{{ r.student.email }}</div>
+                            </td>
+                            <td class="fw-medium text-dark">{{ r.exam.title }}</td>
+                            <td><span class="badge bg-light text-secondary border">{{ r.exam.subject }}</span></td>
+                            <td><strong>{{ r.obtained_marks }}</strong> / {{ r.total_marks }}</td>
+                            <td><span class="fw-bold">{{ r.percentage }}%</span></td>
+                            <td>
+                                <span class="badge {{ 'badge-pass' if r.result_status == 'PASS' else 'badge-fail' }}">
+                                    {{ r.result_status }}
+                                </span>
+                            </td>
+                            <td class="small text-muted">{{ r.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td class="pe-4 text-end">
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ url_for('admin.result_detail', result_id=r.id) }}" class="btn btn-outline-primary" title="View Detail Breakdown">
+                                        <i class="bi bi-eye"></i> Detail
+                                    </a>
+                                    <a href="{{ url_for('admin.download_result_pdf', result_id=r.id) }}" class="btn btn-outline-danger" title="Download Official PDF">
+                                        <i class="bi bi-file-earmark-pdf"></i> PDF
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center py-5 text-muted">No examination results found.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}Examinations Management - CloudExam{% endblock %}
+{% block page_title %}Examinations Management{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <p class="text-muted small mb-0">Create, configure, schedule, and publish examinations.</p>
+    </div>
+    <a href="{{ url_for('admin.create_exam') }}" class="btn btn-primary-cloud">
+        <i class="bi bi-plus-lg me-1"></i> Create Examination
+    </a>
+</div>
+
+<div class="card-cloud mb-4">
+    <div class="card-cloud-body">
+        <form method="GET" action="{{ url_for('admin.exams') }}" class="row g-2 align-items-center">
+            <div class="col-12 col-md-6 col-lg-5">
+                <div class="input-group">
+                    <span class="input-group-text bg-light text-muted"><i class="bi bi-search"></i></span>
+                    <input type="text" name="q" class="form-control" placeholder="Search by title or subject..." value="{{ search_query }}">
+                </div>
+            </div>
+            <div class="col-6 col-md-3 col-lg-3">
+                <select name="status" class="form-select">
+                    <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Statuses</option>
+                    <option value="draft" {% if status_filter == 'draft' %}selected{% endif %}>Draft</option>
+                    <option value="published" {% if status_filter == 'published' %}selected{% endif %}>Published</option>
+                    <option value="closed" {% if status_filter == 'closed' %}selected{% endif %}>Closed</option>
+                </select>
+            </div>
+            <div class="col-6 col-md-3 col-lg-2">
+                <button type="submit" class="btn btn-primary-cloud w-100">Filter</button>
+            </div>
+            {% if search_query or status_filter != 'all' %}
+            <div class="col-12 col-lg-2">
+                <a href="{{ url_for('admin.exams') }}" class="btn btn-outline-secondary w-100">Reset</a>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<div class="card-cloud">
+    <div class="card-cloud-header">
+        <h6 class="mb-0 fw-bold text-dark">Examinations ({{ exams|length }})</h6>
+    </div>
+    <div class="card-cloud-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light small text-uppercase text-secondary">
+                    <tr>
+                        <th class="ps-4">Title & Subject</th>
+                        <th>Duration</th>
+                        <th>Questions & Marks</th>
+                        <th>Passing %</th>
+                        <th>Schedule (UTC)</th>
+                        <th>Status</th>
+                        <th class="pe-4 text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if exams %}
+                        {% for exam in exams %}
+                        <tr>
+                            <td class="ps-4">
+                                <div class="fw-semibold text-dark">{{ exam.title }}</div>
+                                <span class="badge bg-light text-secondary border">{{ exam.subject }}</span>
+                            </td>
+                            <td>{{ exam.duration }} mins</td>
+                            <td>
+                                <div><i class="bi bi-patch-question me-1 text-primary"></i><strong>{{ exam.question_count }}</strong> questions</div>
+                                <div class="small text-muted">{{ exam.calculated_total_marks }} / {{ exam.total_marks }} marks</div>
+                            </td>
+                            <td>{{ exam.passing_percentage }}%</td>
+                            <td class="small">
+                                <div><span class="text-muted">Start:</span> {{ exam.start_time.strftime('%Y-%m-%d %H:%M') }}</div>
+                                <div><span class="text-muted">End:</span> {{ exam.end_time.strftime('%Y-%m-%d %H:%M') }}</div>
+                            </td>
+                            <td>
+                                {% if exam.status == 'published' %}
+                                    <span class="badge badge-published">Published</span>
+                                {% elif exam.status == 'closed' %}
+                                    <span class="badge badge-closed">Closed</span>
+                                {% else %}
+                                    <span class="badge badge-draft">Draft</span>
+                                {% endif %}
+                            </td>
+                            <td class="pe-4 text-end">
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ url_for('admin.exam_questions', exam_id=exam.id) }}" class="btn btn-outline-secondary" title="Manage Questions">
+                                        <i class="bi bi-list-task"></i> Questions
+                                    </a>
+                                    <a href="{{ url_for('admin.edit_exam', exam_id=exam.id) }}" class="btn btn-outline-primary" title="Edit Exam">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+
+                                    {% if exam.status == 'draft' %}
+                                    <form method="POST" action="{{ url_for('admin.publish_exam', exam_id=exam.id) }}" class="d-inline">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                        <button type="submit" class="btn btn-sm btn-outline-success" title="Publish Examination">
+                                            <i class="bi bi-send-check"></i>
+                                        </button>
+                                    </form>
+                                    {% elif exam.status == 'published' %}
+                                    <form method="POST" action="{{ url_for('admin.unpublish_exam', exam_id=exam.id) }}" class="d-inline">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                        <button type="submit" class="btn btn-sm btn-outline-warning" title="Revert to Draft">
+                                            <i class="bi bi-arrow-counterclockwise"></i>
+                                        </button>
+                                    </form>
+                                    <form method="POST" action="{{ url_for('admin.close_exam', exam_id=exam.id) }}" class="d-inline">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Close Examination" onclick="return confirm('Close this exam? No further attempts will be accepted.');">
+                                            <i class="bi bi-slash-circle"></i>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+
+                                    <form method="POST" action="{{ url_for('admin.delete_exam', exam_id=exam.id) }}" class="d-inline">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete Exam" onclick="return confirm('Are you sure you want to permanently delete this examination? All questions and attempts will be removed.');">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center py-5 text-muted">No examinations found. Click "Create Examination" to add one.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

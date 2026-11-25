@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - CloudExam{% endblock %}
+{% block page_title %}Administrator Dashboard{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+    <!-- Stat 1: Registered Students -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="stat-card d-flex align-items-center gap-3">
+            <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+                <i class="bi bi-people-fill"></i>
+            </div>
+            <div>
+                <div class="stat-val">{{ total_students }}</div>
+                <div class="stat-label">Registered Students</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stat 2: Total Examinations -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="stat-card d-flex align-items-center gap-3">
+            <div class="stat-icon bg-info bg-opacity-10 text-info">
+                <i class="bi bi-journal-text"></i>
+            </div>
+            <div>
+                <div class="stat-val">{{ total_exams }}</div>
+                <div class="stat-label">Total Examinations</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stat 3: Published Exams -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="stat-card d-flex align-items-center gap-3">
+            <div class="stat-icon bg-success bg-opacity-10 text-success">
+                <i class="bi bi-check-circle-fill"></i>
+            </div>
+            <div>
+                <div class="stat-val">{{ published_exams }}</div>
+                <div class="stat-label">Published (Live)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stat 4: Completed Attempts -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="stat-card d-flex align-items-center gap-3">
+            <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+                <i class="bi bi-award-fill"></i>
+            </div>
+            <div>
+                <div class="stat-val">{{ completed_attempts }}</div>
+                <div class="stat-label">Completed Attempts</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Quick Status Breakdown -->
+    <div class="col-12 col-lg-4">
+        <div class="card-cloud h-100">
+            <div class="card-cloud-header">
+                <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-pie-chart-fill me-2 text-primary"></i>System Summary</h6>
+            </div>
+            <div class="card-cloud-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2.5">
+                        <span class="text-secondary"><i class="bi bi-patch-question me-2"></i>Total Questions in Bank</span>
+                        <span class="badge bg-secondary rounded-pill">{{ total_questions }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2.5">
+                        <span class="text-secondary"><i class="bi bi-pencil-square me-2"></i>Draft Examinations</span>
+                        <span class="badge bg-light text-dark border rounded-pill">{{ draft_exams }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2.5">
+                        <span class="text-secondary"><i class="bi bi-archive me-2"></i>Closed Examinations</span>
+                        <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill">{{ closed_exams }}</span>
+                    </li>
+                </ul>
+                <div class="mt-4 pt-2">
+                    <a href="{{ url_for('admin.create_exam') }}" class="btn btn-primary-cloud w-100 mb-2">
+                        <i class="bi bi-plus-circle me-1"></i> Create New Examination
+                    </a>
+                    <a href="{{ url_for('admin.results') }}" class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-file-earmark-spreadsheet me-1"></i> View Results Registry
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Completed Examinations -->
+    <div class="col-12 col-lg-8">
+        <div class="card-cloud h-100">
+            <div class="card-cloud-header">
+                <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-clock-history me-2 text-primary"></i>Recent Exam Submissions</h6>
+                <a href="{{ url_for('admin.results') }}" class="text-primary small fw-semibold text-decoration-none">View All Results</a>
+            </div>
+            <div class="card-cloud-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light small text-uppercase text-secondary">
+                            <tr>
+                                <th class="ps-4">Student</th>
+                                <th>Exam Title</th>
+                                <th>Score</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                                <th class="pe-4 text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if recent_results %}
+                                {% for r in recent_results %}
+                                <tr>
+                                    <td class="ps-4 fw-medium text-dark">{{ r.student.name }}</td>
+                                    <td>{{ r.exam.title }}</td>
+                                    <td><span class="fw-bold">{{ r.obtained_marks }}</span> / {{ r.total_marks }} ({{ r.percentage }}%)</td>
+                                    <td>
+                                        <span class="badge {{ 'badge-pass' if r.result_status == 'PASS' else 'badge-fail' }}">
+                                            {{ r.result_status }}
+                                        </span>
+                                    </td>
+                                    <td class="small text-muted">{{ r.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td class="pe-4 text-end">
+                                        <a href="{{ url_for('admin.result_detail', result_id=r.id) }}" class="btn btn-sm btn-outline-primary py-0 px-2" title="View Result">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-4 text-muted">No examination attempts have been submitted yet.</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

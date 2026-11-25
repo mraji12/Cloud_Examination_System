@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}Student Dashboard - CloudExam{% endblock %}
+{% block page_title %}Student Portal{% endblock %}
+
+{% block content %}
+<!-- Welcome & Profile Banner -->
+<div class="card-cloud mb-4 p-4" style="background: linear-gradient(135deg, #1e3a8a 0%, #1e293b 100%); color: #ffffff;">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+        <div>
+            <div class="badge bg-white bg-opacity-20 text-white mb-2 px-3 py-1.5"><i class="bi bi-person-circle me-1"></i> Student Profile</div>
+            <h3 class="fw-bold mb-1">Hello, {{ current_user.name }}!</h3>
+            <p class="mb-0 text-light opacity-75 small">{{ current_user.email }} | Registered Since {{ current_user.created_at.strftime('%B %Y') }}</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('exams.list_exams') }}" class="btn btn-light text-primary fw-semibold">
+                <i class="bi bi-play-circle-fill me-1 text-primary"></i> Attend Exam
+            </a>
+            <a href="{{ url_for('student.performance') }}" class="btn btn-outline-light">
+                <i class="bi bi-graph-up me-1"></i> My Performance
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Stat Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-12 col-sm-4">
+        <div class="stat-card">
+            <div class="stat-label">Average Performance</div>
+            <div class="stat-val text-primary">{{ avg_score }}%</div>
+            <div class="small text-muted mt-1">Across all completed exams</div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-4">
+        <div class="stat-card">
+            <div class="stat-label">Pass Rate</div>
+            <div class="stat-val text-success">{{ pass_rate }}%</div>
+            <div class="small text-muted mt-1">Success percentage</div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-4">
+        <div class="stat-card">
+            <div class="stat-label">Completed Exams</div>
+            <div class="stat-val text-info">{{ total_completed }}</div>
+            <div class="small text-muted mt-1">Submitted attempts</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Available Examinations to Attend -->
+    <div class="col-12 col-lg-7">
+        <div class="card-cloud h-100">
+            <div class="card-cloud-header">
+                <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-lightning-charge-fill me-2 text-warning"></i>Available Examinations Now</h6>
+                <a href="{{ url_for('exams.list_exams') }}" class="text-primary small fw-semibold text-decoration-none">View All</a>
+            </div>
+            <div class="card-cloud-body p-0">
+                <div class="list-group list-group-flush">
+                    {% if available_exams %}
+                        {% for exam in available_exams %}
+                        <div class="list-group-item p-3 d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="fw-bold mb-1 text-dark">{{ exam.title }}</h6>
+                                <div class="d-flex align-items-center gap-2 small text-muted">
+                                    <span class="badge bg-light text-dark border">{{ exam.subject }}</span>
+                                    <span><i class="bi bi-clock me-1"></i>{{ exam.duration }} mins</span>
+                                    <span><i class="bi bi-patch-question me-1"></i>{{ exam.question_count }} Qs ({{ exam.total_marks }} Marks)</span>
+                                </div>
+                            </div>
+                            <div>
+                                <a href="{{ url_for('exams.instructions', exam_id=exam.id) }}" class="btn btn-sm btn-primary-cloud">
+                                    <i class="bi bi-play-fill me-1"></i> Start Exam
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="p-4 text-center text-muted">
+                            <i class="bi bi-check2-circle fs-3 text-success d-block mb-2"></i>
+                            No active examinations available for you right now.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upcoming Examinations -->
+    <div class="col-12 col-lg-5">
+        <div class="card-cloud h-100">
+            <div class="card-cloud-header">
+                <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-calendar-event-fill me-2 text-primary"></i>Upcoming Examinations</h6>
+            </div>
+            <div class="card-cloud-body p-0">
+                <div class="list-group list-group-flush">
+                    {% if upcoming_exams %}
+                        {% for exam in upcoming_exams %}
+                        <div class="list-group-item p-3">
+                            <h6 class="fw-semibold mb-1 text-dark">{{ exam.title }}</h6>
+                            <div class="small text-muted">
+                                <span class="badge bg-light text-secondary border me-1">{{ exam.subject }}</span>
+                                Starts: {{ exam.start_time.strftime('%Y-%m-%d %H:%M UTC') }}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="p-4 text-center text-muted">
+                            No scheduled upcoming exams at this moment.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Previous Examination Results -->
+<div class="card-cloud">
+    <div class="card-cloud-header">
+        <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-clock-history me-2 text-primary"></i>Recent Examination History</h6>
+        <a href="{{ url_for('results.history') }}" class="text-primary small fw-semibold text-decoration-none">Full History</a>
+    </div>
+    <div class="card-cloud-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light small text-uppercase text-secondary">
+                    <tr>
+                        <th class="ps-4">Exam</th>
+                        <th>Subject</th>
+                        <th>Score</th>
+                        <th>Percentage</th>
+                        <th>Outcome</th>
+                        <th>Submission Date</th>
+                        <th class="pe-4 text-end">Report</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if latest_results %}
+                        {% for r in latest_results %}
+                        <tr>
+                            <td class="ps-4 fw-semibold text-dark">{{ r.exam.title }}</td>
+                            <td><span class="badge bg-light text-secondary border">{{ r.exam.subject }}</span></td>
+                            <td><strong>{{ r.obtained_marks }}</strong> / {{ r.total_marks }}</td>
+                            <td><span class="fw-bold">{{ r.percentage }}%</span></td>
+                            <td>
+                                <span class="badge {{ 'badge-pass' if r.result_status == 'PASS' else 'badge-fail' }}">
+                                    {{ r.result_status }}
+                                </span>
+                            </td>
+                            <td class="small text-muted">{{ r.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td class="pe-4 text-end">
+                                <a href="{{ url_for('results.view_result', result_id=r.id) }}" class="btn btn-sm btn-outline-primary py-0 px-2 me-1">
+                                    <i class="bi bi-eye"></i> View
+                                </a>
+                                <a href="{{ url_for('results.download_pdf', result_id=r.id) }}" class="btn btn-sm btn-outline-danger py-0 px-2">
+                                    <i class="bi bi-file-earmark-pdf"></i> PDF
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-muted">You have not completed any examinations yet.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block title %}System Analytics - CloudExam{% endblock %}
+{% block page_title %}System Performance Analytics{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+    <!-- Stat Cards -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-label">Overall Average Score</div>
+            <div class="stat-val text-primary">{{ avg_marks }}%</div>
+            <div class="small text-muted mt-1">Across all examinations</div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-label">Overall Pass Rate</div>
+            <div class="stat-val text-success">{{ pass_pct }}%</div>
+            <div class="small text-muted mt-1">{{ pass_count }} Pass / {{ fail_count }} Fail</div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-label">Highest Score Recorded</div>
+            <div class="stat-val text-info">{{ highest_score }}%</div>
+            <div class="small text-muted mt-1">Peak candidate achievement</div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-label">Lowest Score Recorded</div>
+            <div class="stat-val text-warning">{{ lowest_score }}%</div>
+            <div class="small text-muted mt-1">Minimum score registered</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Chart 1: Pass vs Fail (Pie Chart) -->
+    <div class="col-12 col-lg-4">
+        <div class="card-cloud h-100">
+            <div class="card-cloud-header">
+                <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-pie-chart-fill me-2 text-primary"></i>Pass vs Fail Distribution</h6>
+            </div>
+            <div class="card-cloud-body d-flex align-items-center justify-content-center" style="min-height: 280px;">
+                <canvas id="passFailChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart 2: Exam-wise Average Marks -->
+    <div class="col-12 col-lg-8">
+        <div class="card-cloud h-100">
+            <div class="card-cloud-header">
+                <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-bar-chart-fill me-2 text-primary"></i>Average Score by Examination</h6>
+            </div>
+            <div class="card-cloud-body" style="min-height: 280px;">
+                <canvas id="examAvgChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Chart 3: Subject-wise Performance -->
+    <div class="col-12 col-lg-6">
+        <div class="card-cloud h-100">
+            <div class="card-cloud-header">
+                <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-mortarboard-fill me-2 text-primary"></i>Subject-Wise Performance</h6>
+            </div>
+            <div class="card-cloud-body" style="min-height: 260px;">
+                <canvas id="subjectChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart 4: Examination Participation -->
+    <div class="col-12 col-lg-6">
+        <div class="card-cloud h-100">
+            <div class="card-cloud-header">
+                <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-people-fill me-2 text-primary"></i>Candidate Participation Count</h6>
+            </div>
+            <div class="card-cloud-body" style="min-height: 260px;">
+                <canvas id="participationChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Chart 5: Student Performance Comparison -->
+    <div class="col-12">
+        <div class="card-cloud">
+            <div class="card-cloud-header">
+                <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-graph-up me-2 text-primary"></i>Top Student Performance Comparison</h6>
+            </div>
+            <div class="card-cloud-body" style="min-height: 300px;">
+                <canvas id="studentPerformanceChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    fetch("{{ url_for('admin.analytics_data') }}")
+        .then(res => res.json())
+        .then(data => {
+            // 1. Pass / Fail Pie Chart
+            new Chart(document.getElementById('passFailChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: data.pass_fail.labels,
+                    datasets: [{
+                        data: data.pass_fail.data,
+                        backgroundColor: ['#10b981', '#ef4444'],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+
+            // 2. Exam Average Marks Bar Chart
+            new Chart(document.getElementById('examAvgChart'), {
+                type: 'bar',
+                data: {
+                    labels: data.exam_averages.labels,
+                    datasets: [{
+                        label: 'Average Score (%)',
+                        data: data.exam_averages.data,
+                        backgroundColor: '#2563eb',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, max: 100 }
+                    }
+                }
+            });
+
+            // 3. Subject-wise performance
+            new Chart(document.getElementById('subjectChart'), {
+                type: 'bar',
+                data: {
+                    labels: data.subject_performance.labels,
+                    datasets: [{
+                        label: 'Subject Average (%)',
+                        data: data.subject_performance.data,
+                        backgroundColor: '#0ea5e9',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, max: 100 }
+                    }
+                }
+            });
+
+            // 4. Participation Chart
+            new Chart(document.getElementById('participationChart'), {
+                type: 'bar',
+                data: {
+                    labels: data.exam_participation.labels,
+                    datasets: [{
+                        label: 'Candidates Submitted',
+                        data: data.exam_participation.data,
+                        backgroundColor: '#8b5cf6',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, ticks: { precision: 0 } }
+                    }
+                }
+            });
+
+            // 5. Student Performance Chart
+            new Chart(document.getElementById('studentPerformanceChart'), {
+                type: 'bar',
+                data: {
+                    labels: data.student_performance.labels,
+                    datasets: [{
+                        label: 'Average Percentage (%)',
+                        data: data.student_performance.data,
+                        backgroundColor: '#1d4ed8',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, max: 100 }
+                    }
+                }
+            });
+        })
+        .catch(err => console.error('Error loading analytics:', err));
+});
+</script>
+{% endblock %}

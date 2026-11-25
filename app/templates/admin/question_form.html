@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - CloudExam{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-12 col-lg-8">
+        <div class="card-cloud">
+            <div class="card-cloud-header">
+                <div>
+                    <h6 class="mb-0 fw-bold text-dark">{{ title }}</h6>
+                    <span class="text-muted small">Examination: {{ exam.title }}</span>
+                </div>
+                <a href="{{ url_for('admin.exam_questions', exam_id=exam.id) }}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i> Back to Questions
+                </a>
+            </div>
+            <div class="card-cloud-body p-4">
+                <form method="POST" novalidate>
+                    {{ form.hidden_tag() }}
+
+                    <div class="mb-3">
+                        <label for="{{ form.question_text.id }}" class="form-label fw-semibold text-secondary small">Question Prompt</label>
+                        {{ form.question_text(class="form-control" + (" is-invalid" if form.question_text.errors else ""), rows=3, placeholder="Enter the complete question text here...") }}
+                        {% for error in form.question_text.errors %}
+                            <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-md-6">
+                            <label for="{{ form.option_a.id }}" class="form-label fw-semibold text-secondary small">Option A</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light fw-bold">A</span>
+                                {{ form.option_a(class="form-control" + (" is-invalid" if form.option_a.errors else ""), placeholder="Text for option A") }}
+                            </div>
+                            {% for error in form.option_a.errors %}
+                                <div class="text-danger small mt-1">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label for="{{ form.option_b.id }}" class="form-label fw-semibold text-secondary small">Option B</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light fw-bold">B</span>
+                                {{ form.option_b(class="form-control" + (" is-invalid" if form.option_b.errors else ""), placeholder="Text for option B") }}
+                            </div>
+                            {% for error in form.option_b.errors %}
+                                <div class="text-danger small mt-1">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label for="{{ form.option_c.id }}" class="form-label fw-semibold text-secondary small">Option C</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light fw-bold">C</span>
+                                {{ form.option_c(class="form-control" + (" is-invalid" if form.option_c.errors else ""), placeholder="Text for option C") }}
+                            </div>
+                            {% for error in form.option_c.errors %}
+                                <div class="text-danger small mt-1">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label for="{{ form.option_d.id }}" class="form-label fw-semibold text-secondary small">Option D</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light fw-bold">D</span>
+                                {{ form.option_d(class="form-control" + (" is-invalid" if form.option_d.errors else ""), placeholder="Text for option D") }}
+                            </div>
+                            {% for error in form.option_d.errors %}
+                                <div class="text-danger small mt-1">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-12 col-md-8">
+                            <label class="form-label fw-semibold text-secondary small d-block">Select Correct Answer</label>
+                            <div class="d-flex gap-4 p-2.5 rounded bg-light border">
+                                {% for subfield in form.correct_answer %}
+                                    <div class="form-check">
+                                        {{ subfield(class="form-check-input") }}
+                                        {{ subfield.label(class="form-check-label fw-bold") }}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            {% for error in form.correct_answer.errors %}
+                                <div class="text-danger small mt-1">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="col-12 col-md-4">
+                            <label for="{{ form.marks.id }}" class="form-label fw-semibold text-secondary small">Marks Awarded</label>
+                            {{ form.marks(class="form-control" + (" is-invalid" if form.marks.errors else "")) }}
+                            {% for error in form.marks.errors %}
+                                <div class="text-danger small mt-1">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="pt-3 border-top d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('admin.exam_questions', exam_id=exam.id) }}" class="btn btn-outline-secondary">Cancel</a>
+                        {{ form.submit(class="btn btn-primary-cloud px-4") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

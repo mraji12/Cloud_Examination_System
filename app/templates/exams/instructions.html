@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Instructions: {{ exam.title }} - CloudExam{% endblock %}
+{% block page_title %}Examination Instructions{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-12 col-lg-8">
+        <div class="card-cloud">
+            <div class="card-cloud-header">
+                <div>
+                    <h5 class="fw-bold text-dark mb-0">{{ exam.title }}</h5>
+                    <span class="badge bg-light text-secondary border mt-1">{{ exam.subject }}</span>
+                </div>
+                <a href="{{ url_for('exams.list_exams') }}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i> Back to Exams
+                </a>
+            </div>
+
+            <div class="card-cloud-body p-4">
+                <div class="alert alert-info border-0 shadow-sm d-flex align-items-center gap-3">
+                    <i class="bi bi-info-circle-fill fs-3 text-info"></i>
+                    <div>
+                        <strong>Please read all instructions thoroughly before beginning.</strong><br>
+                        Once you click the "Start Examination Now" button, your countdown timer will begin immediately on the server.
+                    </div>
+                </div>
+
+                <!-- Exam Metrics Card -->
+                <div class="row g-3 my-3">
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 bg-light rounded text-center border">
+                            <span class="text-muted small d-block">Duration</span>
+                            <span class="fs-5 fw-bold text-primary">{{ exam.duration }} Mins</span>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 bg-light rounded text-center border">
+                            <span class="text-muted small d-block">Total Questions</span>
+                            <span class="fs-5 fw-bold text-dark">{{ exam.question_count }}</span>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 bg-light rounded text-center border">
+                            <span class="text-muted small d-block">Total Marks</span>
+                            <span class="fs-5 fw-bold text-dark">{{ exam.total_marks }}</span>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 bg-light rounded text-center border">
+                            <span class="text-muted small d-block">Passing Mark</span>
+                            <span class="fs-5 fw-bold text-success">{{ exam.passing_percentage }}%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <h6 class="fw-bold text-dark mt-4 mb-2"><i class="bi bi-shield-check me-2 text-primary"></i>Rules & Examination Regulations:</h6>
+                <ul class="text-secondary small mb-4 lh-lg">
+                    <li>This test consists of multiple-choice questions (MCQs). Each question has exactly <strong>one</strong> correct answer.</li>
+                    <li>You can navigate between questions freely using the Question Navigation Palette or the Previous / Next buttons.</li>
+                    <li>Your selected answers are <strong>automatically saved in real-time</strong> as you select options.</li>
+                    <li>The countdown timer runs on the <strong>server</strong>. Refreshing or reloading the page will <strong>not</strong> reset your timer.</li>
+                    <li>If the time expires before you submit, your examination will be <strong>automatically finalized and submitted</strong> with all saved answers.</li>
+                    <li>Do not close your browser tab until you see the confirmation screen and your final evaluated score.</li>
+                </ul>
+
+                <div class="p-3 bg-light rounded-3 border mb-4">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="acceptRulesCheck" required>
+                        <label class="form-check-label fw-semibold text-dark small" for="acceptRulesCheck">
+                            I have read, understood, and agree to abide by the CloudExam examination regulations.
+                        </label>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{{ url_for('exams.list_exams') }}" class="btn btn-outline-secondary">Cancel</a>
+                    <form method="POST" action="{{ url_for('exams.start_exam', exam_id=exam.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <button type="submit" id="startBtn" class="btn btn-primary-cloud px-4 py-2" disabled>
+                            <i class="bi bi-play-circle me-1"></i> Start Examination Now
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const acceptCheck = document.getElementById('acceptRulesCheck');
+    const startBtn = document.getElementById('startBtn');
+    if (acceptCheck && startBtn) {
+        acceptCheck.addEventListener('change', function () {
+            startBtn.disabled = !this.checked;
+        });
+    }
+</script>
+{% endblock %}
